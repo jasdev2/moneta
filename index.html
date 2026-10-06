@@ -4,10 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Moneta — Personal Finance</title>
-<meta name="theme-color" content="#f7f8fa">
+<meta name="theme-color" content="#111318">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Moneta">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://unpkg.com/lucide@latest"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -148,9 +155,56 @@ button{cursor:pointer}
  .item{grid-template-columns:1fr 40px 40px}.item-data,.item .status-col{display:none}.collapse{display:block}
  .formgrid{grid-template-columns:1fr}.field.full{grid-column:auto}.footer-actions{flex-direction:column}.footer-actions button{width:100%}
 }
+
+/* --- Auth gate --- */
+.auth-gate{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:24px;
+  background:radial-gradient(circle at 20% 10%,rgba(73,160,255,.18),transparent 32%),
+             linear-gradient(135deg,#f7f8fa 0%,#e9edf3 100%)}
+.auth-card{width:min(440px,100%);padding:34px;border:1px solid rgba(255,255,255,.9);
+  background:rgba(255,255,255,.78);backdrop-filter:blur(26px) saturate(150%);
+  -webkit-backdrop-filter:blur(26px) saturate(150%);border-radius:30px;
+  box-shadow:0 35px 100px rgba(20,30,50,.16);text-align:center}
+.auth-brand{display:flex;justify-content:center;align-items:center;gap:10px;font-weight:800;font-size:21px;letter-spacing:-.04em}
+.auth-brandmark{width:44px;height:44px;border-radius:15px;display:grid;place-items:center;color:#fff;
+  background:linear-gradient(145deg,#111,#4a4f59);box-shadow:0 10px 25px rgba(0,0,0,.15)}
+.auth-card h1{font-size:32px;letter-spacing:-.06em;margin:28px 0 8px}
+.auth-card p{color:var(--muted);font-size:12px;line-height:1.6;margin:0 auto 24px;max-width:330px}
+.googlebtn{width:100%;min-height:50px;border:1px solid #d9dde4;background:#fff;color:#17191d;border-radius:15px;
+  display:flex;align-items:center;justify-content:center;gap:11px;font-weight:800;box-shadow:0 8px 25px rgba(20,25,35,.08)}
+.googlebtn:hover{transform:translateY(-1px);box-shadow:0 12px 30px rgba(20,25,35,.12)}
+.google-icon{width:20px;height:20px}
+.auth-status{min-height:18px;margin-top:14px;color:#c62828;font-size:11px;line-height:1.5}
+.auth-user{display:flex;align-items:center;gap:9px}
+.auth-avatar{width:30px;height:30px;border-radius:50%;object-fit:cover;background:#eef1f5}
+.logout-btn{border:1px solid var(--line);background:rgba(255,255,255,.72);color:var(--ink);
+  border-radius:12px;min-height:38px;padding:0 11px;display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:800}
+@media(max-width:650px){.auth-card{padding:27px 21px}.auth-card h1{font-size:28px}}
+
 </style>
 </head>
 <body>
+
+<div class="auth-gate" id="authGate">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <div class="auth-brandmark"><i data-lucide="wallet-cards"></i></div>
+      <span>MONETA</span>
+    </div>
+    <h1>Keuanganmu, lebih terlihat.</h1>
+    <p>Masuk dengan akun Google untuk mengakses dashboard Moneta dan menyimpan data secara online di semua perangkat.</p>
+    <button class="googlebtn" id="googleLoginBtn" type="button">
+      <svg class="google-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path fill="#4285F4" d="M21.35 12.27c0-.71-.06-1.4-.18-2.05H12v3.88h5.24a4.48 4.48 0 0 1-1.94 2.94v2.45h3.14c1.84-1.7 2.91-4.2 2.91-7.22z"/>
+        <path fill="#34A853" d="M12 21.7c2.63 0 4.84-.87 6.45-2.36l-3.14-2.45c-.87.58-1.98.92-3.31.92-2.54 0-4.69-1.72-5.46-4.03H3.3v2.53A9.75 9.75 0 0 0 12 21.7z"/>
+        <path fill="#FBBC05" d="M6.54 13.78A5.86 5.86 0 0 1 6.23 12c0-.62.11-1.22.31-1.78V7.69H3.3A9.74 9.74 0 0 0 2.25 12c0 1.57.38 3.06 1.05 4.31l3.24-2.53z"/>
+        <path fill="#EA4335" d="M12 6.19c1.43 0 2.72.49 3.73 1.45l2.8-2.8C16.84 3.2 14.63 2.3 12 2.3a9.75 9.75 0 0 0-8.7 5.39l3.24 2.53C7.31 7.91 9.46 6.19 12 6.19z"/>
+      </svg>
+      Lanjutkan dengan Google
+    </button>
+    <div class="auth-status" id="authStatus"></div>
+  </div>
+</div>
+
 <div class="app">
   <header class="topbar">
     <div class="brand"><div class="brandmark"><i data-lucide="wallet-cards"></i></div><span>MONETA</span></div>
@@ -159,7 +213,14 @@ button{cursor:pointer}
       <div class="monthlabel" id="monthLabel">Oktober 2026</div>
       <button class="iconbtn" id="nextMonth" aria-label="Bulan berikutnya"><i data-lucide="chevron-right"></i></button>
     </div>
-    <button class="ghostbtn" id="resetMonth"><i data-lucide="rotate-ccw"></i><span>Reset</span></button>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div class="auth-user" id="authUser" style="display:none">
+        <img class="auth-avatar" id="authAvatar" alt="">
+        <span id="authEmail" style="font-size:10px;color:var(--muted);font-weight:800"></span>
+      </div>
+      <button class="logout-btn" id="logoutBtn" type="button" style="display:none"><i data-lucide="log-out"></i> Keluar</button>
+      <button class="ghostbtn" id="resetMonth"><i data-lucide="rotate-ccw"></i><span>Reset</span></button>
+    </div>
   </header>
 
   <div class="app-tagline">
@@ -304,14 +365,48 @@ const defaultData={
     {id:"d3",name:"TV",amount:450000,due:1,tenor:6,paid:3,proof:"",icon:"tv"}
   ]
 };
-let state={year:2026,month:9,data:loadMonth(2026,9),editing:null,mode:"expense"};
+const SUPABASE_URL = "https://nddlaagcwauchportisw.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_WAsUk5VLSN9nrDHlIwTq7w_K8ghP10s";
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
-function key(y,m){return `moneta-v2-${y}-${m}`;}
-function loadMonth(y,m){
-  try{const x=localStorage.getItem(key(y,m)); if(x)return JSON.parse(x)}catch(e){}
-  return {income:0,expenses:[],debts:[]};
+let currentUser = null;
+let state={year:2026,month:9,data:{income:0,expenses:[],debts:[]},editing:null,mode:"expense"};
+
+function emptyMonth(){return {income:0,expenses:[],debts:[]};}
+
+async function loadMonth(y,m){
+  if(!currentUser) return emptyMonth();
+  const {data,error}=await supabaseClient
+    .from("moneta_months")
+    .select("income,expenses,debts")
+    .eq("user_id",currentUser.id)
+    .eq("year",y)
+    .eq("month",m)
+    .maybeSingle();
+  if(error){console.error("loadMonth:",error);return emptyMonth();}
+  return data ? {
+    income:Number(data.income)||0,
+    expenses:Array.isArray(data.expenses)?data.expenses:[],
+    debts:Array.isArray(data.debts)?data.debts:[]
+  } : emptyMonth();
 }
-function saveMonth(){localStorage.setItem(key(state.year,state.month),JSON.stringify(state.data));}
+
+async function saveMonth(){
+  if(!currentUser) throw new Error("Belum login.");
+  const payload={
+    user_id:currentUser.id,
+    year:state.year,
+    month:state.month,
+    income:Number(state.data.income)||0,
+    expenses:state.data.expenses||[],
+    debts:state.data.debts||[],
+    updated_at:new Date().toISOString()
+  };
+  const {error}=await supabaseClient
+    .from("moneta_months")
+    .upsert(payload,{onConflict:"user_id,year,month"});
+  if(error){console.error("saveMonth:",error);throw error;}
+}
 function money(n){return new Intl.NumberFormat("id-ID",{style:"currency",currency:"IDR",maximumFractionDigits:0}).format(Number(n)||0)}
 function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));}
 function daysInMonth(){return new Date(state.year,state.month+1,0).getDate();}
@@ -465,11 +560,11 @@ function updateSummaryPreview(){
 
 document.getElementById("prevMonth").onclick=()=>changeMonth(-1);
 document.getElementById("nextMonth").onclick=()=>changeMonth(1);
-function changeMonth(dir){
+async function changeMonth(dir){
   state.month+=dir;
   if(state.month<0){state.month=11;state.year--}
   if(state.month>11){state.month=0;state.year++}
-  state.data=loadMonth(state.year,state.month);
+  state.data=await loadMonth(state.year,state.month);
   render();
   gsap.from(".hero-card,.item,.income-card",{y:10,opacity:0,stagger:.025,duration:.35,ease:"power2.out"});
 }
@@ -496,9 +591,17 @@ document.getElementById("deleteBtn").onclick=()=>{
  const arr=state.mode==="expense"?state.data.expenses:state.data.debts;const ix=arr.findIndex(x=>x.id===state.editing);if(ix>=0)arr.splice(ix,1);
  saveMonth();closeModal();render();toast("Item dihapus");
 };
-document.getElementById("saveBtn").onclick=()=>{saveMonth();celebrate();toast(`${monthNames[state.month]} ${state.year} berhasil disimpan`);};
+document.getElementById("saveBtn").onclick=async()=>{
+  try{await saveMonth();celebrate();toast(`${monthNames[state.month]} ${state.year} berhasil disimpan`);}
+  catch(err){toast("Gagal menyimpan ke cloud");}
+};
 
-document.getElementById("resetMonth").onclick=()=>{if(confirm("Kosongkan semua data bulan ini?")){state.data={income:0,expenses:[],debts:[]};saveMonth();render();toast("Bulan dikosongkan")}};
+document.getElementById("resetMonth").onclick=async()=>{
+  if(confirm("Kosongkan semua data bulan ini?")){
+    state.data={income:0,expenses:[],debts:[]};
+    try{await saveMonth();render();toast("Bulan dikosongkan");}catch(err){toast("Gagal menyimpan ke cloud");}
+  }
+};
 
 let calendarDebtId=null, calendarYear=state.year, calendarMonth=state.month, selectedProofDate=null;
 
@@ -557,8 +660,9 @@ document.getElementById("calendarProofInput").onchange=e=>{
   reader.onload=()=>{
     const debt=getDebt(calendarDebtId);proofMap(debt)[selectedProofDate]=reader.result;
     // Keep the latest proof on the debt too, for quick status/summary access.
-    debt.proof=reader.result; saveMonth(); render(); selectProofDate(selectedProofDate);
-    toast("Bukti pembayaran tersimpan");
+    debt.proof=reader.result;
+    saveMonth().then(()=>{render();selectProofDate(selectedProofDate);toast("Bukti pembayaran tersimpan");})
+      .catch(err=>{console.error(err);toast("Gagal menyimpan bukti ke cloud");});
   };
   reader.readAsDataURL(file);
 };
@@ -566,7 +670,10 @@ document.getElementById("previewProofBtn").onclick=()=>{
   if(!selectedProofDate)return;
   const debt=getDebt(calendarDebtId),src=debt?.proofs?.[selectedProofDate];
   if(!src)return;
-  const w=window.open(); if(w){w.document.write(`<title>Preview Bukti Pembayaran</title><body style="margin:0;background:#111;display:grid;place-items:center;min-height:100vh"><img src="${src}" style="max-width:95vw;max-height:95vh;object-fit:contain"></body>`)}
+  const w=window.open(); if(w){w.document.write(`<title>Preview Bukti Pembayaran</title><body style="margin:0;background:#111;display:grid;place-items:center;min-height:100vh"><img src="${src}" style="max-width:95vw;max-height:95vh;object-fit:contain"><script>
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(console.error);
+</script>
+</body>`)}
 };
 
 document.getElementById("incomeMetric").onclick=()=>{
@@ -574,10 +681,12 @@ document.getElementById("incomeMetric").onclick=()=>{
   document.getElementById("incomeInput").scrollIntoView({behavior:"smooth",block:"center"});
   gsap.fromTo("#incomeInput",{boxShadow:"0 0 0 0 rgba(22,119,255,0)"},{boxShadow:"0 0 0 5px rgba(22,119,255,.15)",duration:.3,yoyo:true,repeat:2});
 };
-document.getElementById("saveIncomeBtn").onclick=()=>{
+document.getElementById("saveIncomeBtn").onclick=async()=>{
   state.data.income=Number(document.getElementById("incomeInput").value)||0;
-  saveMonth();updateSummary();toast("Penghasilan bulan ini disimpan");
-  gsap.fromTo("#incomeInput",{boxShadow:"0 0 0 5px rgba(22,166,106,.18)"},{boxShadow:"0 0 0 0 rgba(22,166,106,0)",duration:.5});
+  try{
+    await saveMonth();updateSummary();toast("Penghasilan bulan ini disimpan");
+    gsap.fromTo("#incomeInput",{boxShadow:"0 0 0 5px rgba(22,166,106,.18)"},{boxShadow:"0 0 0 0 rgba(22,166,106,0)",duration:.5});
+  }catch(err){toast("Gagal menyimpan ke cloud");}
 };
 
 document.getElementById("exportPdfBtn").onclick=()=>{
@@ -628,14 +737,97 @@ document.getElementById("exportPdfBtn").onclick=()=>{
   doc.setTextColor(255,255,255);doc.setFontSize(7);doc.text(health.title,47.5,y+19,{align:"center"});
   doc.setTextColor(95,100,108);doc.setFont("helvetica","normal");doc.setFontSize(8);doc.text(health.note,82,y+18,{maxWidth:106});
   y+=35;
-  doc.setFontSize(7);doc.setTextColor(145,148,154);doc.text("Dibuat oleh Moneta · Data tersimpan lokal di browser",14,287);
+  doc.setFontSize(7);doc.setTextColor(145,148,154);doc.text("Dibuat oleh Moneta · Data tersimpan aman di cloud",14,287);
   doc.save(`moneta-${state.year}-${String(state.month+1).padStart(2,"0")}.pdf`);
   toast("PDF berhasil dibuat");
 };
 
 
-render();
-gsap.from(".topbar,.hero-card,.item,.income-card,.footer-actions",{y:18,opacity:0,stagger:.04,duration:.65,ease:"power3.out"});
+
+/* --- Supabase Authentication --- */
+const authGate=document.getElementById("authGate");
+const authStatus=document.getElementById("authStatus");
+const googleLoginBtn=document.getElementById("googleLoginBtn");
+const logoutBtn=document.getElementById("logoutBtn");
+const authUser=document.getElementById("authUser");
+const authEmail=document.getElementById("authEmail");
+const authAvatar=document.getElementById("authAvatar");
+
+/*
+  Google OAuth access is controlled in Google Cloud > OAuth consent screen > Test users.
+  Keep only your own Google account there for a private Moneta.
+*/
+function setAuthError(msg){
+  authStatus.textContent=msg||"";
+}
+
+function showAuthenticatedUser(user){
+  authGate.style.display="none";
+  authUser.style.display="flex";
+  logoutBtn.style.display="inline-flex";
+  authEmail.textContent=user.email||"";
+  authAvatar.src=user.user_metadata?.avatar_url||user.user_metadata?.picture||"";
+}
+
+function showLoggedOut(){
+  authGate.style.display="grid";
+  authUser.style.display="none";
+  logoutBtn.style.display="none";
+  authEmail.textContent="";
+  authAvatar.removeAttribute("src");
+}
+
+googleLoginBtn.onclick=async()=>{
+  setAuthError("");
+  googleLoginBtn.disabled=true;
+  googleLoginBtn.textContent="Menghubungkan ke Google…";
+  const {error}=await supabaseClient.auth.signInWithOAuth({
+    provider:"google",
+    options:{redirectTo:window.location.origin}
+  });
+  if(error){
+    setAuthError(error.message);
+    googleLoginBtn.disabled=false;
+    googleLoginBtn.innerHTML='<svg class="google-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M21.35 12.27c0-.71-.06-1.4-.18-2.05H12v3.88h5.24a4.48 4.48 0 0 1-1.94 2.94v2.45h3.14c1.84-1.7 2.91-4.2 2.91-7.22z"/><path fill="#34A853" d="M12 21.7c2.63 0 4.84-.87 6.45-2.36l-3.14-2.45c-.87.58-1.98.92-3.31.92-2.54 0-4.69-1.72-5.46-4.03H3.3v2.53A9.75 9.75 0 0 0 12 21.7z"/><path fill="#FBBC05" d="M6.54 13.78A5.86 5.86 0 0 1 6.23 12c0-.62.11-1.22.31-1.78V7.69H3.3A9.74 9.74 0 0 0 2.25 12c0 1.57.38 3.06 1.05 4.31l3.24-2.53z"/><path fill="#EA4335" d="M12 6.19c1.43 0 2.72.49 3.73 1.45l2.8-2.8C16.84 3.2 14.63 2.3 12 2.3a9.75 9.75 0 0 0-8.7 5.39l3.24 2.53C7.31 7.91 9.46 6.19 12 6.19z"/></svg>Lanjutkan dengan Google';
+  }
+};
+
+logoutBtn.onclick=async()=>{
+  await supabaseClient.auth.signOut();
+  currentUser=null;
+  showLoggedOut();
+};
+
+async function bootMoneta(){
+  const {data:{session}}=await supabaseClient.auth.getSession();
+  if(!session){
+    showLoggedOut();
+    lucide.createIcons();
+    return;
+  }
+  currentUser=session.user;
+  showAuthenticatedUser(currentUser);
+  state.data=await loadMonth(state.year,state.month);
+  render();
+  gsap.from(".topbar,.hero-card,.item,.income-card,.footer-actions",{y:18,opacity:0,stagger:.04,duration:.65,ease:"power3.out"});
+}
+
+supabaseClient.auth.onAuthStateChange(async(_event,session)=>{
+  if(session){
+    currentUser=session.user;
+    showAuthenticatedUser(currentUser);
+    state.data=await loadMonth(state.year,state.month);
+    render();
+  }else{
+    currentUser=null;
+    showLoggedOut();
+  }
+});
+
+bootMoneta();
+</script>
+<script>
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(console.error);
 </script>
 </body>
 </html>
