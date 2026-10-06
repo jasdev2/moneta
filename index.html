@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moneta — Personal Finance</title>
+<meta name="theme-color" content="#f7f8fa">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{
+  --bg:#f6f7f9; --card:rgba(255,255,255,.68); --card-solid:#fff;
+  --ink:#111318; --muted:#727782; --line:rgba(17,19,24,.10);
+  --blue:#1677ff; --blue2:#49a0ff; --green:#16a66a; --red:#ef4444;
+  --amber:#e6a700; --shadow:0 24px 70px rgba(25,35,55,.10);
+  --radius:26px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;color:var(--ink);font-family:"Manrope","DM Sans",sans-serif;
+  background:
+    radial-gradient(circle at 12% 0%,rgba(104,179,255,.18),transparent 28%),
+    radial-gradient(circle at 90% 15%,rgba(255,255,255,.95),transparent 32%),
+    linear-gradient(135deg,#f7f8fa 0%,#eef1f5 100%);
+  min-height:100vh; overflow-x:hidden;
+}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.app{max-width:1440px;margin:auto;padding:24px}
+.topbar{
+  position:sticky;top:16px;z-index:20;display:flex;align-items:center;justify-content:space-between;
+  padding:12px 14px 12px 18px;margin-bottom:24px;border:1px solid rgba(255,255,255,.8);
+  background:rgba(255,255,255,.62);backdrop-filter:blur(24px) saturate(150%);
+  -webkit-backdrop-filter:blur(24px) saturate(150%);border-radius:22px;box-shadow:0 10px 40px rgba(40,50,70,.08)
+}
+.brand{display:flex;align-items:center;gap:12px;font-weight:800;letter-spacing:-.04em;font-size:20px}
+.brandmark{width:38px;height:38px;border-radius:13px;display:grid;place-items:center;color:white;background:linear-gradient(145deg,#111,#4a4f59);box-shadow:0 8px 20px rgba(0,0,0,.15)}
+.monthnav{display:flex;align-items:center;gap:8px}
+.iconbtn,.ghostbtn,.primarybtn,.dangerbtn{
+  border:1px solid var(--line);background:rgba(255,255,255,.72);color:var(--ink);
+  border-radius:14px;min-height:42px;padding:0 14px;display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  transition:.25s ease;box-shadow:0 5px 18px rgba(20,25,35,.05)
+}
+.iconbtn{width:42px;padding:0}.iconbtn:hover,.ghostbtn:hover{transform:translateY(-2px);background:#fff;box-shadow:0 9px 25px rgba(20,25,35,.10)}
+.primarybtn{background:#111;color:#fff;border-color:#111;font-weight:700;padding:0 20px;box-shadow:0 12px 30px rgba(0,0,0,.16)}
+.primarybtn:hover{transform:translateY(-2px);box-shadow:0 16px 35px rgba(0,0,0,.20)}
+.dangerbtn{background:#fff0f0;color:#d72828;border-color:#ffd0d0}
+.monthlabel{font-size:15px;font-weight:800;min-width:120px;text-align:center}
+.app-tagline{padding:18px 8px 10px;margin:8px 0 2px}
+.app-tagline .hero-title{font-size:clamp(34px,4.6vw,58px);margin:8px 0 8px}
+.app-tagline .hero-title span{color:#68707d}
+.app-tagline p{margin:0;color:var(--muted);font-size:13px}
+.cockpit-title{font-size:25px;letter-spacing:-.05em;margin:9px 0 4px}
+.cockpit-title span{color:#69717d}
+.hero{display:grid;grid-template-columns:1.3fr .7fr;gap:18px;margin-bottom:18px}
+.hero-card,.card{
+  border:1px solid rgba(255,255,255,.8);background:var(--card);backdrop-filter:blur(22px) saturate(140%);
+  -webkit-backdrop-filter:blur(22px) saturate(140%);border-radius:var(--radius);box-shadow:var(--shadow)
+}
+.hero-card{padding:30px;position:relative;overflow:hidden}
+.hero-card:before{content:"";position:absolute;width:380px;height:380px;border-radius:50%;right:-150px;top:-210px;background:radial-gradient(circle,rgba(54,143,255,.25),transparent 67%);pointer-events:none}
+.eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.16em;color:var(--muted);font-weight:800}
+.hero-title{font-size:clamp(30px,4vw,52px);letter-spacing:-.065em;line-height:1.02;margin:12px 0 12px;max-width:720px}
+.hero-copy{color:var(--muted);max-width:680px;line-height:1.65;margin:0 0 24px}
+.hero-actions{display:flex;gap:10px;flex-wrap:wrap}
+.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:26px}
+.metric{padding:16px;border-radius:18px;background:rgba(255,255,255,.55);border:1px solid var(--line)}
+.metric-button{width:100%;text-align:left;color:inherit;cursor:pointer;transition:.25s ease}
+.metric-button:hover{transform:translateY(-2px);background:#fff;box-shadow:0 10px 25px rgba(20,25,35,.08)}
+.income-edit-row{display:flex;gap:9px}.income-edit-row .input{flex:1}
+.field-hint{font-size:10px;color:var(--muted);margin:9px 0 0}
+.metric small{display:block;color:var(--muted);font-size:11px;font-weight:700;margin-bottom:8px}
+.metric strong{font-size:21px;letter-spacing:-.04em}
+.metric .positive{color:var(--green)}.metric .negative{color:var(--red)}
+.health-card{padding:25px;display:flex;flex-direction:column;justify-content:space-between}
+.health-ring{width:150px;height:150px;border-radius:50%;margin:4px auto 10px;display:grid;place-items:center;
+ background:conic-gradient(var(--green) var(--score),#e8ebef 0);position:relative;box-shadow:0 12px 40px rgba(22,166,106,.12)}
+.health-ring:after{content:"";position:absolute;inset:10px;background:rgba(255,255,255,.92);border-radius:50%;box-shadow:inset 0 0 20px rgba(0,0,0,.04)}
+.health-ring span{position:relative;z-index:1;font-size:31px;font-weight:800;letter-spacing:-.06em}
+.health-text{text-align:center}.health-text h3{margin:5px 0;font-size:19px}.health-text p{color:var(--muted);font-size:12px;line-height:1.5;margin:0}
+.health-card.health-danger{background:linear-gradient(145deg,rgba(255,255,255,.86),rgba(255,241,241,.94));border-color:rgba(239,68,68,.30);box-shadow:0 24px 70px rgba(239,68,68,.12)}
+.health-card.health-danger .health-ring{background:conic-gradient(var(--red) var(--score),#f2dede 0);box-shadow:0 12px 40px rgba(239,68,68,.20);animation:dangerRing 1.8s infinite}
+.health-card.health-danger .health-text h3{color:#d92f2f}
+.health-warning{display:none;align-items:center;justify-content:center;gap:7px;margin:13px auto 0;width:max-content;padding:8px 12px;border-radius:999px;background:#ffe4e4;color:#c92828;font-size:10px;font-weight:800;animation:warningPulse 1.7s infinite}
+.health-card.health-danger .health-warning{display:flex}
+@keyframes warningPulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.18)}50%{box-shadow:0 0 0 7px rgba(239,68,68,0)}}
+@keyframes dangerRing{0%,100%{filter:drop-shadow(0 0 0 rgba(239,68,68,0))}50%{filter:drop-shadow(0 0 12px rgba(239,68,68,.20))}}
+.section-head{display:flex;align-items:end;justify-content:space-between;margin:28px 2px 12px}
+.section-head h2{font-size:18px;margin:0;letter-spacing:-.04em}.section-head p{font-size:12px;color:var(--muted);margin:5px 0 0}
+.list{display:grid;gap:10px}
+.item{
+  display:grid;grid-template-columns:1.15fr .75fr .75fr .7fr 40px 40px;align-items:center;gap:16px;padding:18px 18px;
+  border-radius:20px;background:rgba(255,255,255,.66);border:1px solid rgba(255,255,255,.9);
+  box-shadow:0 8px 30px rgba(30,40,55,.055);transition:.28s ease;position:relative;overflow:hidden
+}
+.item:hover{transform:translateY(-2px);box-shadow:0 14px 40px rgba(30,40,55,.09)}
+.item-main{display:flex;align-items:center;gap:12px;min-width:0}.item-icon{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;background:#f1f4f8;color:#20252e;flex:none}
+.item-name{font-weight:800;font-size:14px}.item-sub{font-size:10px;color:var(--muted);margin-top:3px}
+.data-label{font-size:10px;color:var(--muted);font-weight:700;margin-bottom:5px}.money{font-weight:800;font-size:13px}
+.proof-mini{display:inline-flex;align-items:center;gap:5px;font-size:10px;color:#1267c8;margin-top:5px;font-weight:800}
+.status{display:inline-flex;align-items:center;width:max-content;padding:7px 10px;border-radius:10px;font-size:10px;font-weight:800;gap:5px}
+.status.green{background:#dcf8eb;color:#0c8a56}.status.red{background:#ffe3e3;color:#d52c2c}.status.blue{background:#e2f0ff;color:#1267c8}.status.amber{background:#fff2c9;color:#9b7000}
+.editbtn{width:40px;height:40px;border:0;border-radius:13px;background:#eceff3;display:grid;place-items:center;transition:.2s}.editbtn:hover{background:#111;color:#fff;transform:scale(1.05)}
+.collapse{display:none}
+.income-grid{display:grid;grid-template-columns:.8fr 1.2fr;gap:16px;margin:18px 0 30px}
+.income-card{padding:24px}.income-card h3{margin:0 0 15px;font-size:14px}.input{
+ width:100%;border:1px solid var(--line);background:rgba(255,255,255,.7);border-radius:15px;padding:14px 15px;outline:none;transition:.2s
+}.input:focus{border-color:#8bbdff;box-shadow:0 0 0 4px rgba(22,119,255,.10);background:#fff}
+.analysis{display:flex;gap:14px;align-items:center;padding:18px;border-radius:18px;background:linear-gradient(135deg,#fff8da,#fff);border:1px solid #f1df9c}
+.analysis .pulse{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:#ffd34d;flex:none;animation:softpulse 2s infinite}
+.analysis strong{font-size:13px}.analysis p{margin:4px 0 0;color:#6e6040;font-size:11px;line-height:1.5}
+@keyframes softpulse{0%,100%{box-shadow:0 0 0 0 rgba(255,211,77,.45)}50%{box-shadow:0 0 0 10px rgba(255,211,77,0)}}
+.footer-actions{display:flex;justify-content:flex-end;gap:10px;margin:0 0 40px}
+.modal-wrap{position:fixed;inset:0;z-index:100;display:none;place-items:center;padding:20px;background:rgba(10,13,18,.35);backdrop-filter:blur(12px)}
+.modal{width:min(620px,100%);max-height:90vh;overflow:auto;background:rgba(255,255,255,.92);border:1px solid #fff;border-radius:28px;box-shadow:0 40px 120px rgba(0,0,0,.25);padding:25px}
+.modal-head{display:flex;justify-content:space-between;align-items:start;margin-bottom:20px}.modal h2{margin:0;font-size:23px;letter-spacing:-.05em}.modal p{color:var(--muted);font-size:12px}
+.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.field label{display:block;font-size:11px;font-weight:800;margin:0 0 7px}.field.full{grid-column:1/-1}
+.modal-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:22px}
+.upload{border:1px dashed #c7cdd6;border-radius:18px;padding:22px;text-align:center;background:#f8fafc}.upload input{display:none}.upload label{cursor:pointer;display:block}.preview{max-width:100%;max-height:180px;border-radius:14px;margin-top:12px;display:none}
+.calendar-head{display:flex;align-items:center;justify-content:space-between;margin:8px 0 14px}
+.weekday-row,.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}
+.weekday-row{margin-bottom:7px}.weekday-row span{text-align:center;font-size:10px;color:var(--muted);font-weight:800}
+.day-btn{min-height:48px;border:1px solid var(--line);background:rgba(248,249,251,.85);border-radius:13px;font-weight:800;color:var(--ink);position:relative;transition:.2s}
+.day-btn:hover{transform:translateY(-2px);background:#fff;box-shadow:0 8px 20px rgba(20,25,35,.08)}
+.day-btn.empty{border:0;background:transparent;box-shadow:none;pointer-events:none}
+.day-btn.selected{background:#111;color:#fff;border-color:#111;box-shadow:0 9px 22px rgba(0,0,0,.18)}
+.day-btn.has-proof:after{content:"";width:6px;height:6px;background:#16a66a;border-radius:50%;position:absolute;right:7px;top:7px}
+.selected-date-card{margin-top:15px;padding:15px;border:1px solid var(--line);border-radius:18px;background:rgba(248,249,251,.8);display:flex;justify-content:space-between;align-items:center;gap:10px}
+.selected-date-card strong{display:block;margin-top:5px;font-size:14px}.proof-actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+.proof-preview-wrap{display:none;margin-top:12px;border-radius:18px;padding:10px;background:#f4f6f8;border:1px solid var(--line)}
+.calendar-proof-preview{display:block;width:100%;max-height:320px;object-fit:contain;border-radius:13px}
+.calendar-modal{width:min(700px,100%)}
+.toast{position:fixed;right:24px;bottom:24px;z-index:200;padding:13px 16px;border-radius:15px;background:rgba(18,20,24,.92);color:#fff;box-shadow:0 20px 50px rgba(0,0,0,.25);font-size:12px;display:none}
+.confetti{position:fixed;width:6px;height:10px;z-index:300;pointer-events:none;border-radius:2px}
+.empty{padding:35px;text-align:center;color:var(--muted);border:1px dashed #cfd4dc;border-radius:20px}
+@media(max-width:950px){
+ .hero{grid-template-columns:1fr}.income-grid{grid-template-columns:1fr}
+ .item{grid-template-columns:1fr 1fr 1fr 40px 40px}.item .status-col{grid-column:1/4}
+}
+@media(max-width:650px){
+ .app{padding:14px}.topbar{top:8px}.brand span{display:none}.monthlabel{min-width:100px}
+ .hero-card,.health-card{padding:21px}.summary{grid-template-columns:1fr}
+ .item{grid-template-columns:1fr 40px 40px}.item-data,.item .status-col{display:none}.collapse{display:block}
+ .formgrid{grid-template-columns:1fr}.field.full{grid-column:auto}.footer-actions{flex-direction:column}.footer-actions button{width:100%}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand"><div class="brandmark"><i data-lucide="wallet-cards"></i></div><span>MONETA</span></div>
+    <div class="monthnav">
+      <button class="iconbtn" id="prevMonth" aria-label="Bulan sebelumnya"><i data-lucide="chevron-left"></i></button>
+      <div class="monthlabel" id="monthLabel">Oktober 2026</div>
+      <button class="iconbtn" id="nextMonth" aria-label="Bulan berikutnya"><i data-lucide="chevron-right"></i></button>
+    </div>
+    <button class="ghostbtn" id="resetMonth"><i data-lucide="rotate-ccw"></i><span>Reset</span></button>
+  </header>
+
+  <div class="app-tagline">
+    <div class="eyebrow">MONETA · PERSONAL FINANCE</div>
+    <h1 class="hero-title">Bikin uangmu lebih <span>terlihat.</span></h1>
+    <p>Atur kewajiban, cicilan, dan arus kas bulanan dengan tenang.</p>
+  </div>
+
+  <section class="hero">
+    <div class="hero-card">
+      <div class="eyebrow">Financial cockpit</div>
+      <h2 class="cockpit-title">Laporan <span id="reportMonthInline">Oktober 2026</span></h2>
+      <p class="hero-copy">Pantau kewajiban, cicilan, pengeluaran wajar, dan sisa uang dalam satu dashboard yang tenang—sementara angka-angkanya bekerja di belakang layar.</p>
+      <div class="hero-actions">
+        <button class="primarybtn" id="addExpense"><i data-lucide="plus"></i> Tambah Kewajiban</button>
+        <button class="ghostbtn" id="addDebt"><i data-lucide="credit-card"></i> Tambah Cicilan</button>
+      </div>
+      <div class="summary">
+        <button class="metric metric-button" id="incomeMetric" type="button"><small>PENGHASILAN · KLIK UNTUK EDIT</small><strong id="mIncome">Rp0</strong></button>
+        <div class="metric"><small>KEWAJIBAN + CICILAN</small><strong id="mOut">Rp0</strong></div>
+        <div class="metric"><small>SISA</small><strong id="mRemain">Rp0</strong></div>
+      </div>
+    </div>
+    <div class="health-card hero-card">
+      <div>
+        <div class="eyebrow">Financial health</div>
+        <div class="health-ring" id="healthRing" style="--score:0deg"><span id="healthScore">0</span></div>
+        <div class="health-text"><h3 id="healthTitle">Belum ada data</h3><p id="healthCopy">Isi penghasilan dan kewajiban untuk melihat kondisi keuangan.</p>
+          <div class="health-warning" id="healthWarning"><i data-lucide="triangle-alert"></i> PERHATIAN · DEFISIT</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-head">
+    <div><h2>Kewajiban</h2><p>Pengeluaran rutin dibandingkan dengan batas wajar yang kamu tentukan.</p></div>
+  </div>
+  <section class="list" id="expenseList"></section>
+
+  <div class="section-head">
+    <div><h2>Hutang & Cicilan</h2><p>Status dan progress dihitung otomatis dari tanggal dan pembayaran.</p></div>
+  </div>
+  <section class="list" id="debtList"></section>
+
+  <section class="income-grid">
+    <div class="card income-card">
+      <h3>Total Penghasilan Bulan Ini</h3>
+      <div class="income-edit-row">
+        <input class="input" id="incomeInput" type="number" min="0" step="1000" placeholder="Contoh: 12000000">
+        <button class="primarybtn" id="saveIncomeBtn" type="button"><i data-lucide="check"></i> Simpan</button>
+      </div>
+      <p class="field-hint">Nilai ini khusus untuk bulan yang sedang aktif.</p>
+    </div>
+    <div class="card income-card">
+      <h3>Analisa Otomatis</h3>
+      <div class="analysis" id="analysisBox">
+        <div class="pulse"><i data-lucide="sparkles"></i></div>
+        <div><strong>Belum ada cukup data.</strong><p>Masukkan penghasilan dan data kewajiban untuk mendapatkan analisa.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="footer-actions">
+    <button class="ghostbtn" id="exportPdfBtn"><i data-lucide="file-down"></i> Export PDF</button>
+    <button class="primarybtn" id="saveBtn"><i data-lucide="check"></i> Simpan Laporan</button>
+  </div>
+</div>
+
+
+<div class="modal-wrap" id="calendarWrap">
+  <div class="modal calendar-modal" id="calendarModal">
+    <div class="modal-head">
+      <div><div class="eyebrow">Bukti Pembayaran</div><h2 id="calendarTitle">KPR</h2><p>Pilih tanggal pembayaran terlebih dahulu. Setelah tanggal dipilih, kamu bisa mengunggah bukti.</p></div>
+      <button class="iconbtn" id="closeCalendar"><i data-lucide="x"></i></button>
+    </div>
+    <div class="calendar-head">
+      <button class="iconbtn" id="calPrev"><i data-lucide="chevron-left"></i></button>
+      <strong id="calMonthLabel"></strong>
+      <button class="iconbtn" id="calNext"><i data-lucide="chevron-right"></i></button>
+    </div>
+    <div class="weekday-row"><span>Sen</span><span>Sel</span><span>Rab</span><span>Kam</span><span>Jum</span><span>Sab</span><span>Min</span></div>
+    <div class="calendar-grid" id="calendarGrid"></div>
+    <div class="selected-date-card" id="selectedDateCard">
+      <div>
+        <div class="eyebrow">Tanggal dipilih</div>
+        <strong id="selectedDateLabel">Pilih tanggal</strong>
+      </div>
+      <div class="proof-actions">
+        <input type="file" id="calendarProofInput" accept="image/*" hidden>
+        <button class="ghostbtn" id="uploadProofBtn" type="button" disabled><i data-lucide="upload"></i> Upload Bukti</button>
+        <button class="ghostbtn" id="previewProofBtn" type="button" disabled><i data-lucide="eye"></i> Preview</button>
+      </div>
+    </div>
+    <div class="proof-preview-wrap" id="calendarPreviewWrap">
+      <img id="calendarProofPreview" class="calendar-proof-preview">
+    </div>
+  </div>
+</div>
+
+<div class="modal-wrap" id="modalWrap">
+  <div class="modal" id="modal">
+    <div class="modal-head">
+      <div><div class="eyebrow" id="modalEyebrow">Edit</div><h2 id="modalTitle">Item</h2><p id="modalDesc">Atur data item.</p></div>
+      <button class="iconbtn" id="closeModal"><i data-lucide="x"></i></button>
+    </div>
+    <form id="itemForm">
+      <div class="formgrid">
+        <div class="field"><label>Nama</label><input class="input" id="fName" required></div>
+        <div class="field"><label>Icon (Lucide)</label><input class="input" id="fIcon" placeholder="shopping-bag"></div>
+        <div class="field"><label id="fAmountLabel">Nominal</label><input class="input" id="fAmount" type="number" min="0" required></div>
+        <div class="field" id="budgetField"><label>Pengeluaran Wajar</label><input class="input" id="fBudget" type="number" min="0"></div>
+        <div class="field" id="dueField"><label>Jatuh Tempo (tanggal)</label><input class="input" id="fDue" type="number" min="1" max="31"></div>
+        <div class="field" id="tenorField"><label>Tenor (bulan)</label><input class="input" id="fTenor" type="number" min="1"></div>
+        <div class="field" id="paidField"><label>Cicilan Sudah Dibayar</label><input class="input" id="fPaid" type="number" min="0"></div>
+        <div class="field" id="remainingField"><label>Sisa Cicilan</label><input class="input" id="fRemaining" type="number" min="0" readonly></div>
+        <div class="field full" id="proofField">
+          <label>Bukti Pembayaran</label>
+          <div class="upload"><input id="fProof" type="file" accept="image/*"><label for="fProof"><i data-lucide="image-plus"></i><br><strong>Pilih foto bukti pembayaran</strong><br><span style="font-size:10px;color:#777">Gambar disimpan lokal di browser.</span></label><img id="proofPreview" class="preview"></div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="dangerbtn" id="deleteBtn"><i data-lucide="trash-2"></i> Hapus</button>
+        <div style="flex:1"></div><button type="button" class="ghostbtn" id="cancelBtn">Batal</button><button class="primarybtn" type="submit"><i data-lucide="save"></i> Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const monthNames=["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+const defaultData={
+  income:12000000,
+  expenses:[
+    {id:"e1",name:"Kuota Internet",budget:150000,amount:160000,icon:"wifi"},
+    {id:"e2",name:"Bensin",budget:250000,amount:160000,icon:"fuel"},
+    {id:"e3",name:"Belanja",budget:350000,amount:350000,icon:"shopping-bag"}
+  ],
+  debts:[
+    {id:"d1",name:"KPR",amount:2730000,due:1,tenor:180,paid:1,proof:"",icon:"house"},
+    {id:"d2",name:"LEMARI",amount:730000,due:12,tenor:3,paid:1,proof:"",icon:"archive"},
+    {id:"d3",name:"TV",amount:450000,due:1,tenor:6,paid:3,proof:"",icon:"tv"}
+  ]
+};
+let state={year:2026,month:9,data:loadMonth(2026,9),editing:null,mode:"expense"};
+
+function key(y,m){return `moneta-v2-${y}-${m}`;}
+function loadMonth(y,m){
+  try{const x=localStorage.getItem(key(y,m)); if(x)return JSON.parse(x)}catch(e){}
+  return {income:0,expenses:[],debts:[]};
+}
+function saveMonth(){localStorage.setItem(key(state.year,state.month),JSON.stringify(state.data));}
+function money(n){return new Intl.NumberFormat("id-ID",{style:"currency",currency:"IDR",maximumFractionDigits:0}).format(Number(n)||0)}
+function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));}
+function daysInMonth(){return new Date(state.year,state.month+1,0).getDate();}
+function nowDate(){return new Date();}
+function debtStatus(d){
+  const now=nowDate(), currentMonth=now.getMonth(), currentYear=now.getFullYear();
+  let diff;
+  if(state.year===currentYear && state.month===currentMonth){
+    const due=new Date(state.year,state.month,d.due);
+    diff=Math.ceil((due-now)/(1000*60*60*24));
+    if(d.paid>=d.tenor)return {cls:"green",text:"LUNAS",icon:"badge-check"};
+    if(diff>1)return {cls:"blue",text:`${diff} Hari Lagi`,icon:"clock-3"};
+    if(diff===1)return {cls:"blue",text:"1 Hari Lagi",icon:"clock-3"};
+    if(diff===0)return {cls:"amber",text:"Jatuh Tempo Hari Ini",icon:"alarm-clock"};
+    return {cls:"red",text:`Telat ${Math.abs(diff)} Hari`,icon:"triangle-alert"};
+  }
+  return {cls:"blue",text:`Tanggal ${d.due}`,icon:"calendar-days"};
+}
+function expenseStatus(e){
+  const diff=Number(e.amount)-Number(e.budget);
+  if(diff>0)return {cls:"red",text:`BOROS ${money(diff)}`,icon:"trending-up"};
+  if(diff<0)return {cls:"green",text:`HEMAT ${money(Math.abs(diff))}`,icon:"trending-down"};
+  return {cls:"blue",text:"PAS",icon:"equal"};
+}
+function render(){
+  document.getElementById("monthLabel").textContent=`${monthNames[state.month]} ${state.year}`;
+  const reportMonth=document.getElementById("reportMonthInline");
+  if(reportMonth) reportMonth.textContent=`${monthNames[state.month]} ${state.year}`;
+  const ex=document.getElementById("expenseList"), de=document.getElementById("debtList");
+  ex.innerHTML=state.data.expenses.length?state.data.expenses.map(e=>{
+    const s=expenseStatus(e);
+    return `<article class="item" data-id="${e.id}" data-kind="expense">
+      <div class="item-main"><div class="item-icon"><i data-lucide="${esc(e.icon||"wallet")}"></i></div><div><div class="item-name">${esc(e.name)}</div><div class="item-sub">Pengeluaran rutin</div></div></div>
+      <div class="item-data"><div class="data-label">Pengeluaran Wajar</div><div class="money">${money(e.budget)}</div></div>
+      <div class="item-data"><div class="data-label">Yang Kamu Keluarkan</div><div class="money">${money(e.amount)}</div></div>
+      <div class="status-col"><div class="data-label">Keterangan</div><span class="status ${s.cls}"><i data-lucide="${s.icon}"></i>${s.text}</span></div>
+      <button class="editbtn" onclick="openEdit('expense','${e.id}')"><i data-lucide="pencil"></i></button>
+      <div class="collapse"><span class="data-label">Wajar ${money(e.budget)} · Aktual ${money(e.amount)}</span> <span class="status ${s.cls}">${s.text}</span></div>
+    </article>`
+  }).join(""):`<div class="empty">Belum ada kewajiban. Tambahkan item pertama kamu.</div>`;
+
+  de.innerHTML=state.data.debts.length?state.data.debts.map(d=>{
+    const s=debtStatus(d), progress=Math.min(d.paid,d.tenor);
+    return `<article class="item" data-id="${d.id}" data-kind="debt">
+      <div class="item-main"><div class="item-icon"><i data-lucide="${esc(d.icon||"credit-card")}"></i></div><div><div class="item-name">${esc(d.name)}</div><div class="item-sub">Per tanggal ${d.due}</div></div></div>
+      <div class="item-data"><div class="data-label">Bulanan</div><div class="money">${money(d.amount)}</div></div>
+      <div class="item-data"><div class="data-label">Progress</div><div class="money">${progress}/${d.tenor}</div></div>
+      <div class="status-col"><div class="data-label">Keterangan</div><span class="status ${s.cls}"><i data-lucide="${s.icon}"></i>${s.text}</span></div>
+      <button class="editbtn" title="Edit cicilan" onclick="openEdit('debt','${d.id}')"><i data-lucide="pencil"></i></button>
+      <button class="editbtn" title="Bukti pembayaran" onclick="openCalendar('debt','${d.id}')"><i data-lucide="calendar-days"></i></button>
+      <div class="collapse"><span class="data-label">Bulanan ${money(d.amount)} · Progress ${progress}/${d.tenor}</span> <span class="status ${s.cls}">${s.text}</span></div>
+    </article>`
+  }).join(""):`<div class="empty">Belum ada cicilan.</div>`;
+
+  document.getElementById("incomeInput").value=state.data.income||"";
+  updateSummary(); lucide.createIcons();
+}
+function updateSummary(){
+  const income=Number(state.data.income)||0;
+  const expenses=state.data.expenses.reduce((a,e)=>a+Number(e.amount||0),0);
+  const debts=state.data.debts.filter(d=>d.paid<d.tenor).reduce((a,d)=>a+Number(d.amount||0),0);
+  const out=expenses+debts, remain=income-out;
+  document.getElementById("mIncome").textContent=money(income);
+  document.getElementById("mOut").textContent=money(out);
+  const rem=document.getElementById("mRemain"); rem.textContent=money(remain); rem.className=remain<0?"negative":"positive";
+  let score=0,title="Belum ada data",copy="Isi penghasilan dan kewajiban untuk melihat kondisi keuangan.";
+  if(income>0){
+    const ratio=out/income;
+    score=Math.max(0,Math.min(100,Math.round((1-ratio)*100)));
+    if(remain<0){title="Defisit";copy="Kewajiban bulan ini lebih besar daripada penghasilan. Prioritaskan pembayaran terpenting."}
+    else if(ratio>.85){title="Perlu Berhati-hati";copy="Kewajiban memakan sebagian besar penghasilan. Ruang napas bulan ini cukup tipis."}
+    else if(ratio>.65){title="Cukup Aman";copy="Kewajiban masih terkendali, tetapi tetap jaga pengeluaran fleksibel."}
+    else {title="Kondisi Sehat";copy="Masih ada ruang yang cukup baik setelah kebutuhan dan cicilan utama."}
+  }
+  document.getElementById("healthScore").textContent=score;
+  document.getElementById("healthRing").style.setProperty("--score",(score*3.6)+"deg");
+  document.getElementById("healthTitle").textContent=title;
+  document.getElementById("healthCopy").textContent=copy;
+  const healthCard=document.querySelector(".health-card");
+  if(healthCard) healthCard.classList.toggle("health-danger", title==="Defisit");
+  const healthWarning=document.getElementById("healthWarning");
+  if(healthWarning) healthWarning.innerHTML=title==="Defisit"
+    ? '<i data-lucide="triangle-alert"></i> PERHATIAN · DEFISIT'
+    : '<i data-lucide="shield-check"></i> KONDISI TERKENDALI';
+  const box=document.getElementById("analysisBox");
+  let icon="sparkles",bg="#ffd34d",head="Belum ada cukup data.",sub="Masukkan penghasilan dan data kewajiban untuk mendapatkan analisa.";
+  if(income){
+    if(remain<0){icon="triangle-alert";bg="#ff7070";head=`Defisit ${money(Math.abs(remain))}`;sub="Ada kewajiban yang belum tertutup oleh penghasilan bulan ini."}
+    else if(remain<250000){icon="alert-circle";bg="#ffd34d";head=`Sisa sangat tipis: ${money(remain)}`;sub="Kebutuhan dan cicilan aman, tetapi buffer bulan ini kecil."}
+    else {icon="sparkles";bg="#78dfb0";head=`Masih tersisa ${money(remain)}`;sub="Kebutuhan dan cicilan utama masih berada dalam batas penghasilan."}
+  }
+  box.innerHTML=`<div class="pulse" style="background:${bg}"><i data-lucide="${icon}"></i></div><div><strong>${head}</strong><p>${sub}</p></div>`;
+  lucide.createIcons();
+}
+function openEdit(kind,id=null){
+  state.mode=kind; state.editing=id;
+  const obj=id?(kind==="expense"?state.data.expenses.find(x=>x.id===id):state.data.debts.find(x=>x.id===id)):null;
+  document.getElementById("modalEyebrow").textContent=id?"Edit item":kind==="expense"?"Kewajiban baru":"Cicilan baru";
+  document.getElementById("modalTitle").textContent=obj?.name|| (kind==="expense"?"Tambah Kewajiban":"Tambah Cicilan");
+  document.getElementById("modalDesc").textContent=kind==="expense"?"Status boros/hemat/pas dihitung otomatis.":"Tanggal jatuh tempo dan status pembayaran dihitung otomatis.";
+  document.getElementById("fName").value=obj?.name||"";
+  document.getElementById("fIcon").value=obj?.icon|| (kind==="expense"?"wallet":"credit-card");
+  document.getElementById("fAmount").value=obj?.amount||"";
+  document.getElementById("fBudget").value=obj?.budget||"";
+  document.getElementById("fDue").value=obj?.due||1;
+  document.getElementById("fTenor").value=obj?.tenor||1;
+  document.getElementById("fPaid").value=obj?.paid||0;
+  document.getElementById("budgetField").style.display=kind==="expense"?"block":"none";
+  ["dueField","tenorField","paidField","remainingField"].forEach(x=>document.getElementById(x).style.display=kind==="debt"?"block":"none");
+  document.getElementById("fRemaining").value=kind==="debt" ? Math.max(0,(Number(obj?.tenor)||1)-(Number(obj?.paid)||0)) : "";
+  document.getElementById("proofField").style.display="none";
+  document.getElementById("deleteBtn").style.display=id?"inline-flex":"none";
+  if(kind==="debt"){
+    const syncRemaining=()=>{
+      const tenor=Math.max(0,Number(document.getElementById("fTenor").value)||0);
+      const paid=Math.max(0,Number(document.getElementById("fPaid").value)||0);
+      document.getElementById("fRemaining").value=Math.max(0,tenor-paid);
+    };
+    document.getElementById("fTenor").oninput=syncRemaining;
+    document.getElementById("fPaid").oninput=syncRemaining;
+  }
+  const img=document.getElementById("proofPreview"); img.src=obj?.proof||"";img.style.display=obj?.proof?"block":"none";
+  document.getElementById("modalWrap").style.display="grid";
+  gsap.fromTo("#modal",{y:25,scale:.96,opacity:0},{y:0,scale:1,opacity:1,duration:.38,ease:"power3.out"});
+  lucide.createIcons();
+}
+function closeModal(){
+  gsap.to("#modal",{y:15,scale:.98,opacity:0,duration:.2,onComplete:()=>document.getElementById("modalWrap").style.display="none"});
+}
+function toast(msg){
+  const t=document.getElementById("toast");t.textContent=msg;t.style.display="block";
+  gsap.fromTo(t,{y:20,opacity:0},{y:0,opacity:1,duration:.3});
+  clearTimeout(window.__toast);window.__toast=setTimeout(()=>gsap.to(t,{y:15,opacity:0,duration:.25,onComplete:()=>t.style.display="none"}),2300);
+}
+function celebrate(){
+  for(let i=0;i<22;i++){
+    const el=document.createElement("div");el.className="confetti";el.style.left=(50+(Math.random()*30-15))+"vw";el.style.top="48vh";el.style.background=["#111","#1677ff","#16a66a","#ffca3a"][i%4];document.body.appendChild(el);
+    gsap.to(el,{x:(Math.random()*500-250),y:(Math.random()*-300-80),rotation:Math.random()*720-360,opacity:0,duration:1+Math.random()*.6,ease:"power2.out",onComplete:()=>el.remove()});
+  }
+}
+document.getElementById("incomeInput").addEventListener("input",()=>updateSummaryPreview());
+function updateSummaryPreview(){
+  const income=Number(document.getElementById("incomeInput").value)||0;
+  const expenses=state.data.expenses.reduce((a,e)=>a+Number(e.amount||0),0);
+  const debts=state.data.debts.filter(d=>d.paid<d.tenor).reduce((a,d)=>a+Number(d.amount||0),0);
+  const out=expenses+debts, remain=income-out;
+  document.getElementById("mIncome").textContent=money(income);
+  document.getElementById("mOut").textContent=money(out);
+  const rem=document.getElementById("mRemain"); rem.textContent=money(remain); rem.className=remain<0?"negative":"positive";
+}
+
+document.getElementById("prevMonth").onclick=()=>changeMonth(-1);
+document.getElementById("nextMonth").onclick=()=>changeMonth(1);
+function changeMonth(dir){
+  state.month+=dir;
+  if(state.month<0){state.month=11;state.year--}
+  if(state.month>11){state.month=0;state.year++}
+  state.data=loadMonth(state.year,state.month);
+  render();
+  gsap.from(".hero-card,.item,.income-card",{y:10,opacity:0,stagger:.025,duration:.35,ease:"power2.out"});
+}
+document.getElementById("addExpense").onclick=()=>openEdit("expense");
+document.getElementById("addDebt").onclick=()=>openEdit("debt");
+document.getElementById("closeModal").onclick=closeModal;
+document.getElementById("cancelBtn").onclick=closeModal;
+document.getElementById("modalWrap").addEventListener("click",e=>{if(e.target.id==="modalWrap")closeModal()});
+document.getElementById("fProof").addEventListener("change",e=>{
+ const file=e.target.files[0]; if(!file)return; const r=new FileReader();r.onload=()=>{document.getElementById("proofPreview").src=r.result;document.getElementById("proofPreview").style.display="block"};r.readAsDataURL(file);
+});
+document.getElementById("itemForm").onsubmit=e=>{
+ e.preventDefault();
+ const kind=state.mode,id=state.editing;
+ const payload={id:id||crypto.randomUUID(),name:document.getElementById("fName").value.trim(),icon:document.getElementById("fIcon").value.trim()||"wallet",amount:Number(document.getElementById("fAmount").value)||0};
+ if(kind==="expense")payload.budget=Number(document.getElementById("fBudget").value)||0;
+ else {payload.due=Math.max(1,Math.min(31,Number(document.getElementById("fDue").value)||1));payload.tenor=Math.max(1,Number(document.getElementById("fTenor").value)||1);payload.paid=Math.max(0,Math.min(payload.tenor,Number(document.getElementById("fPaid").value)||0));payload.proof=document.getElementById("proofPreview").src||""}
+ const arr=kind==="expense"?state.data.expenses:state.data.debts;
+ const ix=arr.findIndex(x=>x.id===id); if(ix>=0)arr[ix]=payload;else arr.push(payload);
+ saveMonth();closeModal();render();toast("Perubahan disimpan");gsap.fromTo(`[data-id="${payload.id}"]`,{scale:.98,boxShadow:"0 0 0 rgba(0,0,0,0)"},{scale:1,boxShadow:"0 0 0 5px rgba(22,119,255,.12)",duration:.35,yoyo:true,repeat:1});
+};
+document.getElementById("deleteBtn").onclick=()=>{
+ if(!state.editing)return; if(!confirm("Hapus item ini?"))return;
+ const arr=state.mode==="expense"?state.data.expenses:state.data.debts;const ix=arr.findIndex(x=>x.id===state.editing);if(ix>=0)arr.splice(ix,1);
+ saveMonth();closeModal();render();toast("Item dihapus");
+};
+document.getElementById("saveBtn").onclick=()=>{saveMonth();celebrate();toast(`${monthNames[state.month]} ${state.year} berhasil disimpan`);};
+
+document.getElementById("resetMonth").onclick=()=>{if(confirm("Kosongkan semua data bulan ini?")){state.data={income:0,expenses:[],debts:[]};saveMonth();render();toast("Bulan dikosongkan")}};
+
+let calendarDebtId=null, calendarYear=state.year, calendarMonth=state.month, selectedProofDate=null;
+
+function getDebt(id){return state.data.debts.find(d=>d.id===id)}
+function proofMap(debt){if(!debt.proofs) debt.proofs={}; return debt.proofs}
+function openCalendar(kind,id){
+  if(kind!=="debt")return;
+  calendarDebtId=id; calendarYear=state.year; calendarMonth=state.month; selectedProofDate=null;
+  document.getElementById("calendarTitle").textContent=getDebt(id)?.name||"Cicilan";
+  document.getElementById("calendarPreviewWrap").style.display="none";
+  document.getElementById("uploadProofBtn").disabled=true;
+  document.getElementById("previewProofBtn").disabled=true;
+  renderCalendar();
+  document.getElementById("calendarWrap").style.display="grid";
+  gsap.fromTo("#calendarModal",{y:22,scale:.97,opacity:0},{y:0,scale:1,opacity:1,duration:.35,ease:"power3.out"});
+}
+function closeCalendar(){
+  gsap.to("#calendarModal",{y:12,scale:.98,opacity:0,duration:.2,onComplete:()=>document.getElementById("calendarWrap").style.display="none"});
+}
+function renderCalendar(){
+  const label=document.getElementById("calMonthLabel");
+  label.textContent=`${monthNames[calendarMonth]} ${calendarYear}`;
+  const grid=document.getElementById("calendarGrid");
+  const first=new Date(calendarYear,calendarMonth,1);
+  const start=(first.getDay()+6)%7;
+  const total=new Date(calendarYear,calendarMonth+1,0).getDate();
+  const debt=getDebt(calendarDebtId), proofs=debt?proofMap(debt):{};
+  let out="";
+  for(let i=0;i<start;i++)out+='<button class="day-btn empty"></button>';
+  for(let d=1;d<=total;d++){
+    const k=`${calendarYear}-${String(calendarMonth+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+    const has=!!proofs[k], sel=selectedProofDate===k;
+    out+=`<button type="button" class="day-btn ${has?"has-proof":""} ${sel?"selected":""}" onclick="selectProofDate('${k}')">${d}</button>`;
+  }
+  grid.innerHTML=out;lucide.createIcons();
+}
+function selectProofDate(k){
+  selectedProofDate=k;
+  const debt=getDebt(calendarDebtId), proof=debt?.proofs?.[k];
+  const date=new Date(k+"T00:00:00");
+  document.getElementById("selectedDateLabel").textContent=date.toLocaleDateString("id-ID",{day:"numeric",month:"long",year:"numeric"});
+  document.getElementById("uploadProofBtn").disabled=false;
+  document.getElementById("previewProofBtn").disabled=!proof;
+  const wrap=document.getElementById("calendarPreviewWrap"),img=document.getElementById("calendarProofPreview");
+  if(proof){img.src=proof;wrap.style.display="block"}else{wrap.style.display="none"}
+  renderCalendar();
+}
+document.getElementById("closeCalendar").onclick=closeCalendar;
+document.getElementById("calendarWrap").addEventListener("click",e=>{if(e.target.id==="calendarWrap")closeCalendar()});
+document.getElementById("calPrev").onclick=()=>{calendarMonth--;if(calendarMonth<0){calendarMonth=11;calendarYear--}renderCalendar()};
+document.getElementById("calNext").onclick=()=>{calendarMonth++;if(calendarMonth>11){calendarMonth=0;calendarYear++}renderCalendar()};
+document.getElementById("uploadProofBtn").onclick=()=>document.getElementById("calendarProofInput").click();
+document.getElementById("calendarProofInput").onchange=e=>{
+  const file=e.target.files[0]; if(!file||!selectedProofDate)return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    const debt=getDebt(calendarDebtId);proofMap(debt)[selectedProofDate]=reader.result;
+    // Keep the latest proof on the debt too, for quick status/summary access.
+    debt.proof=reader.result; saveMonth(); render(); selectProofDate(selectedProofDate);
+    toast("Bukti pembayaran tersimpan");
+  };
+  reader.readAsDataURL(file);
+};
+document.getElementById("previewProofBtn").onclick=()=>{
+  if(!selectedProofDate)return;
+  const debt=getDebt(calendarDebtId),src=debt?.proofs?.[selectedProofDate];
+  if(!src)return;
+  const w=window.open(); if(w){w.document.write(`<title>Preview Bukti Pembayaran</title><body style="margin:0;background:#111;display:grid;place-items:center;min-height:100vh"><img src="${src}" style="max-width:95vw;max-height:95vh;object-fit:contain"></body>`)}
+};
+
+document.getElementById("incomeMetric").onclick=()=>{
+  document.getElementById("incomeInput").focus();
+  document.getElementById("incomeInput").scrollIntoView({behavior:"smooth",block:"center"});
+  gsap.fromTo("#incomeInput",{boxShadow:"0 0 0 0 rgba(22,119,255,0)"},{boxShadow:"0 0 0 5px rgba(22,119,255,.15)",duration:.3,yoyo:true,repeat:2});
+};
+document.getElementById("saveIncomeBtn").onclick=()=>{
+  state.data.income=Number(document.getElementById("incomeInput").value)||0;
+  saveMonth();updateSummary();toast("Penghasilan bulan ini disimpan");
+  gsap.fromTo("#incomeInput",{boxShadow:"0 0 0 5px rgba(22,166,106,.18)"},{boxShadow:"0 0 0 0 rgba(22,166,106,0)",duration:.5});
+};
+
+document.getElementById("exportPdfBtn").onclick=()=>{
+  if(!window.jspdf || !window.jspdf.jsPDF){toast("PDF engine belum siap. Coba lagi sebentar.");return;}
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({unit:"mm",format:"a4"});
+  const income=Number(state.data.income)||0;
+  const expenses=state.data.expenses.reduce((a,e)=>a+Number(e.amount||0),0);
+  const debts=state.data.debts.filter(d=>d.paid<d.tenor).reduce((a,d)=>a+Number(d.amount||0),0);
+  const remain=income-expenses-debts;
+  const W=210; let y=20;
+  doc.setFillColor(17,17,18);doc.roundedRect(14,14,182,28,6,6,"F");
+  doc.setTextColor(255,255,255);doc.setFont("helvetica","bold");doc.setFontSize(20);doc.text("MONETA",22,27);
+  doc.setFont("helvetica","normal");doc.setFontSize(9);doc.text("Financial Report",22,34);
+  doc.text(`${monthNames[state.month]} ${state.year}`,174,28,{align:"right"});
+  y=53;doc.setTextColor(20,20,22);doc.setFont("helvetica","bold");doc.setFontSize(13);doc.text("Ringkasan Keuangan",14,y);
+  y+=9;doc.setFontSize(10);doc.setFont("helvetica","normal");
+  [["Penghasilan",income],["Kewajiban + Cicilan",expenses+debts],["Sisa",remain]].forEach((r,i)=>{
+    const x=14+i*61;doc.setDrawColor(225,227,231);doc.setFillColor(248,249,251);doc.roundedRect(x,y,57,25,4,4,"FD");
+    doc.setTextColor(110,115,124);doc.setFontSize(8);doc.text(r[0],x+5,y+8);
+    doc.setTextColor(20,20,22);doc.setFont("helvetica","bold");doc.setFontSize(10);doc.text(money(r[1]),x+5,y+17);doc.setFont("helvetica","normal");
+  });
+  y+=37;doc.setFont("helvetica","bold");doc.setFontSize(12);doc.text("Kewajiban",14,y);y+=7;
+  doc.setFontSize(8);
+  state.data.expenses.forEach(e=>{
+    if(y>275){doc.addPage();y=20}
+    const s=expenseStatus(e);doc.setTextColor(30,30,34);doc.text(e.name,16,y);
+    doc.setTextColor(105,110,118);doc.text(`Wajar ${money(e.budget)} · Aktual ${money(e.amount)}`,75,y);
+    doc.setTextColor(s.cls==="red"?210:s.cls==="green"?10:18,s.cls==="red"?45:s.cls==="green"?138:103,s.cls==="red"?45:s.cls==="green"?86:200);doc.text(s.text,190,y,{align:"right"});y+=7;
+  });
+  y+=5;doc.setTextColor(20,20,22);doc.setFont("helvetica","bold");doc.setFontSize(12);doc.text("Hutang & Cicilan",14,y);y+=7;doc.setFontSize(8);doc.setFont("helvetica","normal");
+  state.data.debts.forEach(d=>{
+    if(y>275){doc.addPage();y=20}
+    const s=debtStatus(d);doc.setTextColor(30,30,34);doc.text(d.name,16,y);
+    doc.setTextColor(105,110,118);doc.text(`Bulanan ${money(d.amount)} · Progress ${Math.min(d.paid,d.tenor)}/${d.tenor} · Jatuh tempo ${d.due}`,60,y);
+    doc.setTextColor(30,105,190);doc.text(s.text,190,y,{align:"right"});y+=7;
+  });
+  y+=10;
+  const ratio=income?((expenses+debts)/income):0;
+  const health=remain<0 ? {title:"DEFISIT",note:"Kewajiban bulan ini lebih besar daripada penghasilan.",r:220,g:55,b:55}
+    : ratio>.85 ? {title:"PERLU BERHATI-HATI",note:"Kewajiban memakan sebagian besar penghasilan.",r:220,g:160,b:20}
+    : ratio>.65 ? {title:"CUKUP AMAN",note:"Kewajiban masih terkendali.",r:35,g:125,b:210}
+    : income>0 ? {title:"KONDISI SEHAT",note:"Masih ada ruang yang cukup baik setelah kewajiban utama.",r:15,g:145,b:90}
+    : {title:"BELUM ADA DATA",note:"Isi penghasilan dan kewajiban untuk melihat kondisi keuangan.",r:120,g:125,b:135};
+  doc.setFillColor(248,249,251);doc.setDrawColor(225,227,231);doc.roundedRect(14,y,182,28,5,5,"FD");
+  doc.setFont("helvetica","bold");doc.setFontSize(11);doc.setTextColor(25,25,28);doc.text("Financial Health",20,y+9);
+  doc.setFillColor(health.r,health.g,health.b);doc.roundedRect(20,y+13,55,9,4,4,"F");
+  doc.setTextColor(255,255,255);doc.setFontSize(7);doc.text(health.title,47.5,y+19,{align:"center"});
+  doc.setTextColor(95,100,108);doc.setFont("helvetica","normal");doc.setFontSize(8);doc.text(health.note,82,y+18,{maxWidth:106});
+  y+=35;
+  doc.setFontSize(7);doc.setTextColor(145,148,154);doc.text("Dibuat oleh Moneta · Data tersimpan lokal di browser",14,287);
+  doc.save(`moneta-${state.year}-${String(state.month+1).padStart(2,"0")}.pdf`);
+  toast("PDF berhasil dibuat");
+};
+
+
+render();
+gsap.from(".topbar,.hero-card,.item,.income-card,.footer-actions",{y:18,opacity:0,stagger:.04,duration:.65,ease:"power3.out"});
+</script>
+</body>
+</html>
